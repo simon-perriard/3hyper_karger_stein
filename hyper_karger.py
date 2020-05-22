@@ -70,15 +70,27 @@ def min_cut(n, graph):
     #print("graph")
     #print(n)
     #print(graph)
+    #print()
     #print(n - ceil(n/sqrt(2)))
 
     if n <= 3:
-        return len(graph)
+        
+        if n == 2:
+            return len(graph)
+        
+        # try one last contraction
+        to_contract = precontracted[random.randint(0, len(precontracted)-1)]
+        new_n, last_try = contract_hyperedge(to_contract, precontracted, new_n)
 
-    for _ in range(n - ceil(n/sqrt(3))):
+        if new_n == 1: #should not have contracted
+            return len(graph)
+        else:
+            return len(last_try)
+        
+
+    for _ in range(n - ceil(n/sqrt(2))):
         to_contract = precontracted[random.randint(0, len(precontracted)-1)]
         new_n, temp = contract_hyperedge(to_contract, precontracted, new_n)
-
 
         precontracted = temp
         #print("deleted")
@@ -86,13 +98,16 @@ def min_cut(n, graph):
         #print("temp")
         #print(new_n)
         #print(temp)
+        #print()
 
 
     res = []
     for _ in range(3):
-        res.append(min_cut(new_n, precontracted))
+        sub_min = min_cut(new_n, precontracted)
+        #print(str(i) + ": " + str(sub_min))
+        res.append(sub_min)
 
-    #print(res)
+    print(res)
 
     return min(res)
 
