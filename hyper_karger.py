@@ -31,11 +31,6 @@ def replace_endpoints(hyperedge, e, history):
     new_edge = []
     new_history = [[i for i in group] for group in history]
 
-    #print("***** BEGIN *****")
-
-    #print(hyperedge)
-    #print(e)
-
     # replace the vertices contracted by the new one
     for i in range(len(e)):
 
@@ -53,12 +48,6 @@ def replace_endpoints(hyperedge, e, history):
 
         else:
             new_edge.append(elt)
-
-        #print(i, elt)
-        #print(new_history)
-
-    #print("***** END *****")
-
 
     return new_edge, new_history
 
@@ -136,12 +125,6 @@ def insert_cut(cut_size, history):
 ## Karger-Stein
 def min_cut(n, graph, history):
 
-    #print("graph")
-    #print(n)
-    #print(graph)
-    #print()
-    #print(n - ceil(n/sqrt(2)))
-
     if n <= 3:
 
         cut_size = 0
@@ -172,18 +155,8 @@ def min_cut(n, graph, history):
         to_contract = precontracted[random.randint(0, len(precontracted)-1)]
         new_n, precontracted, new_history = contract_hyperedge(to_contract, precontracted, new_n, new_history)
 
-        #print("deleted")
-        #print(to_contract)
-        #print("temp")
-        #print(new_n)
-        #print(temp)
-        #print()
-
-
     for _ in range(2):
         min_cut(new_n, [[endpoint for endpoint in edge] for edge in precontracted], new_history)
-
-    #print(res)
 
     return
 
