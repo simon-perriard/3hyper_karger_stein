@@ -86,8 +86,55 @@ def contract_hyperedge(hyperedge, graph, n, history):
     return new_n, contracted_graph, new_history
 
 
+current_min = 40000000
+
+## each cell will contain [cut_size, [[hash0, [set0]], [hash1, set1], ...]]
+## ordered by hash value
+## contain those buckets only for the cut_size == current_min
+## A min_cut is represented only once
+global_history = []
+
+def new_min(x):
+    global current_min
+    current_min = min(x, current_min)
+
+def insert_cut(cut_size, history):
+
+    if cut_size > current_min:
+        return
+
+    global global_history
+
+    new_min(cut_size)
+
+    ## Prepare candidate
+
+    ## Sort the sets inside
+    prep0 = [sorted(cut_set) for cut_set in history if len(cut_set) > 0]
+
+    ## Compute hash for each set
+    prep1 = [[hash(tuple(cut_set)), cut_set] for cut_set in prep0]
+
+    ## Sort sets according to hash value
+    prep2 = sorted(prep1, key=lambda k: k[0])
+
+    ## Extract hash list for comparison
+    candidate_hash_list = [h[0] for h in prep2]
+
+
+    ## Clean current global history
+    global_history = [cut for cut in global_history if cut[0] == current_min]
+
+    ## Extract list of hash list of current cuts
+    current_hash_list = [[e[0] for e in cut[1]] for cut in global_history]
+
+    if candidate_hash_list not in current_hash_list:
+        global_history.append([cut_size, prep2])
+
+    return
+
 ## Karger-Stein
-def min_cut(n, graph, res_count, history):
+def min_cut(n, graph, history):
 
     #print("graph")
     #print(n)
@@ -101,8 +148,8 @@ def min_cut(n, graph, res_count, history):
         
         if n == 2:
             cut_size = len(graph)
-            res_count.append((cut_size, history))
-            return cut_size
+            insert_cut(cut_size, history)
+            return
         
         # try one last contraction
         to_contract = graph[random.randint(0, len(graph)-1)]
@@ -110,12 +157,12 @@ def min_cut(n, graph, res_count, history):
 
         if new_n == 1: #should not have contracted
             cut_size = len(graph)
-            res_count.append((cut_size, history))
+            insert_cut(cut_size, history)
         else:
             cut_size = len(last_try)
-            res_count.append((cut_size, new_history))
+            insert_cut(cut_size, new_history)
 
-        return cut_size
+        return
 
     precontracted = graph
     new_n = n
@@ -133,40 +180,35 @@ def min_cut(n, graph, res_count, history):
         #print()
 
 
-    res = []
-
     for _ in range(2):
-        sub_min = min_cut(new_n, [[endpoint for endpoint in edge] for edge in precontracted], res_count, new_history)
-        res.append(sub_min)
+        min_cut(new_n, [[endpoint for endpoint in edge] for edge in precontracted], new_history)
 
     #print(res)
 
-    return min(res)
+    return
 
-n, graph = get_input()
 
-res = []
+def yeet():
+    n, graph = get_input()
 
-res_count = []
-# used to count how many min cuts we encountered
-# will contain the history of the contractions at the end of each recursion
-# first indice of each sub array is the min cut value found
+    # used to count how many min cuts we encountered
+    # will contain the history of the contractions at the end of each recursion for current_min
+    # first indice of each sub array is the min cut value found
 
-# at first, each element represents itself
-history = [[x] for x in range(1, n+1)]
+    # at first, each element represents itself
+    history = [[x] for x in range(1, n+1)]
 
-for _ in range(ceil((log(n, 2)**2))):
-    temp = min_cut(n, graph, res_count, history)
-    res.append(temp)
+    for _ in range(3*ceil((log(n, 2)**2))):
+        min_cut(n, graph, history)
 
-min_cut = min(res)
+    print(current_min, len(global_history))
 
-# keep only best and remove empty buckets
-best = [[group for group in x[1] if len(group) > 0] for x in res_count if x[0] == min_cut]
+    #cuts = [[hashed_tuple[1] for hashed_tuple in complete[1]] for complete in global_history]
+    #print(cuts)
 
-print(min_cut, best)
+yeet()
 
-## LONG
+### LONG
 '''def min_cut(graph):
     contracted_new = graph
     contracted_old = contracted_new
