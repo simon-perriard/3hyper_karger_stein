@@ -5,6 +5,7 @@ from math import sqrt
 from math import floor
 from math import ceil
 from math import log
+import time
 
 def get_input():
     raw_nm = input()
@@ -78,8 +79,7 @@ def contract_hyperedge(hyperedge, graph, n, history):
 current_min = 40000000
 
 ## each cell will contain [cut_size, [[hash0, [set0]], [hash1, set1], ...]]
-## ordered by hash value
-## contain those buckets only for the cut_size == current_min
+## ordered by hash value for later comparison
 ## A min_cut is represented only once
 global_history = []
 
@@ -87,38 +87,44 @@ def new_min(x):
     global current_min
     current_min = min(x, current_min)
 
+
 def insert_cut(cut_size, history):
+
+    global global_history
 
     if cut_size > current_min:
         return
 
-    global global_history
-
     new_min(cut_size)
 
     ## Prepare candidate
-
     ## Sort the sets inside
     prep0 = [sorted(cut_set) for cut_set in history if len(cut_set) > 0]
 
     ## Compute hash for each set
-    prep1 = [[hash(tuple(cut_set)), cut_set] for cut_set in prep0]
+    #prep1 = [[hash(tuple(cut_set)), cut_set] for cut_set in prep0]
+    prep1 = [hash(tuple(cut_set)) for cut_set in prep0]
 
     ## Sort sets according to hash value
-    prep2 = sorted(prep1, key=lambda k: k[0])
+    #prep2 = sorted(prep1, key=lambda k: k[0])
+    prep2 = sorted(prep1)
+
+    current_hash_list = [x[1] for x in global_history]
+
+    if prep2 not in current_hash_list:
+        global_history.append([cut_size, prep2])
 
     ## Extract hash list for comparison
-    candidate_hash_list = [h[0] for h in prep2]
-
+    #candidate_hash_list = [h[0] for h in prep2]
 
     ## Clean current global history
-    global_history = [cut for cut in global_history if cut[0] == current_min]
+    #global_history = [cut for cut in global_history if cut[0] == current_min]
 
     ## Extract list of hash list of current cuts
-    current_hash_list = [[e[0] for e in cut[1]] for cut in global_history]
+    #current_hash_list = [[e[0] for e in cut[1]] for cut in global_history]
 
-    if candidate_hash_list not in current_hash_list:
-        global_history.append([cut_size, prep2])
+    #if candidate_hash_list not in current_hash_list:
+    #    global_history.append([cut_size, prep2])
 
     return
 
@@ -164,22 +170,27 @@ def min_cut(n, graph, history):
 def yeet():
     n, graph = get_input()
 
-    # used to count how many min cuts we encountered
-    # will contain the history of the contractions at the end of each recursion for current_min
-    # first indice of each sub array is the min cut value found
-
     # at first, each element represents itself
     history = [[x] for x in range(1, n+1)]
 
-    for _ in range(3*ceil((log(n, 2)**2))):
+    for _ in range(2*ceil((log(n, 2)**2))):
         min_cut(n, graph, history)
+
+    #insert_buffer()
+
+    global global_history
+
+    global_history = [x[1] for x in global_history if x[0] == current_min]
 
     print(current_min, len(global_history))
 
     #cuts = [[hashed_tuple[1] for hashed_tuple in complete[1]] for complete in global_history]
     #print(cuts)
 
+start = time.time()
 yeet()
+end = time.time()
+print((end-start) * 1000)
 
 ### LONG
 '''def min_cut(graph):
