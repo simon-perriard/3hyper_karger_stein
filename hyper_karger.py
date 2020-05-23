@@ -5,9 +5,8 @@ from math import sqrt
 from math import floor
 from math import ceil
 from math import log
-import time
 
-cumul_time = 0.0
+SHOW_CUTS = False
 
 def get_input():
     raw_nm = input()
@@ -33,11 +32,7 @@ def replace_endpoints(hyperedge, e, history):
     
     new_vertice = hyperedge[0]
     new_edge = []
-    #start = time.time()
     new_history = history
-    #end = time.time()
-    #global cumul_time
-    #cumul_time += (end-start)
 
     # replace the vertices contracted by the new one
     for i in range(3):
@@ -61,12 +56,10 @@ def replace_endpoints(hyperedge, e, history):
     return new_edge, new_history
 
 def contract_hyperedge(hyperedge, graph, n, history):
-    #start = time.time()
     contracted_graph = []
 
     ## If all the endpoints of the edge to are different, 2 will disappear into the one remaining
     ## If only 2 different endpoints, 1 will disappear
-
     new_n = n
     new_history = [[i for i in group] for group in history]
 
@@ -81,13 +74,10 @@ def contract_hyperedge(hyperedge, graph, n, history):
 
         if not (contracted_edge[0] == contracted_edge[1] == contracted_edge[2]): # ignore if it's a point (lööp)
             contracted_graph.append(contracted_edge)
-    #end = time.time()
-    #global cumul_time
-    #cumul_time += (end-start)
 
     return new_n, contracted_graph, new_history
 
-
+# This is not a magic number
 current_min = 40000000
 
 ## each cell will contain [cut_size, [[hash0, [set0]], [hash1, set1], ...]]
@@ -99,9 +89,7 @@ def new_min(x):
     global current_min
     current_min = min(x, current_min)
 
-
 def insert_cut(cut_size, history):
-    #start = time.time()
     global global_history
 
     if cut_size > current_min:
@@ -113,34 +101,35 @@ def insert_cut(cut_size, history):
     ## Sort the sets inside
     prep0 = [sorted(cut_set) for cut_set in history if len(cut_set) > 0]
 
-    ## Compute hash for each set
-    #prep1 = [[hash(tuple(cut_set)), cut_set] for cut_set in prep0]
-    prep1 = [hash(tuple(cut_set)) for cut_set in prep0]
+    if SHOW_CUTS:
+        ## Compute hash for each set
+        prep1 = [[hash(tuple(cut_set)), cut_set] for cut_set in prep0]
 
-    ## Sort sets according to hash value
-    #prep2 = sorted(prep1, key=lambda k: k[0])
-    prep2 = sorted(prep1)
+        ## Sort sets according to hash value
+        prep2 = sorted(prep1, key=lambda k: k[0])
 
-    current_hash_list = [x[1] for x in global_history]
+        ## Extract list of hash list of current cuts
+        current_hash_list = [[e[0] for e in cut[1]] for cut in global_history]
 
-    if prep2 not in current_hash_list:
-        global_history.append([cut_size, prep2])
+        ## Extract hash list for comparison
+        candidate_hash_list = [h[0] for h in prep2]
 
-    ## Extract hash list for comparison
-    #candidate_hash_list = [h[0] for h in prep2]
+        if candidate_hash_list not in current_hash_list:
+            global_history.append([cut_size, prep2])
 
-    ## Clean current global history
-    #global_history = [cut for cut in global_history if cut[0] == current_min]
+    else:
+        ## Compute hash for each set
+        prep1 = [hash(tuple(cut_set)) for cut_set in prep0]
 
-    ## Extract list of hash list of current cuts
-    #current_hash_list = [[e[0] for e in cut[1]] for cut in global_history]
+        ## Sort sets according to hash value
+        prep2 = sorted(prep1)
 
-    #if candidate_hash_list not in current_hash_list:
-    #    global_history.append([cut_size, prep2])
+        ## Extract list of hash list of current cuts
+        current_hash_list = [x[1] for x in global_history]
 
-    #end = time.time()
-    #global cumul_time
-    #cumul_time += (end-start)
+        if prep2 not in current_hash_list:
+            global_history.append([cut_size, prep2])
+    
 
     return
 
@@ -185,46 +174,23 @@ def min_cut(n, graph, history):
 
 def yeet():
     n, graph = get_input()
-    
+
     # at first, each element represents itself
     history = [[x] for x in range(1, n+1)]
-    #start = time.time()
+
     for _ in range(4*ceil((log(n, 2)**2))):
         min_cut(n, graph, history)
-    #end = time.time()
-    #insert_buffer()
 
     global global_history
     global_history = [x[1] for x in global_history if x[0] == current_min]
-    
-    #print(cumul_time * 1000)
-    #print((end-start)*1000)
 
     print(current_min, len(global_history))
 
-    #cuts = [[hashed_tuple[1] for hashed_tuple in complete[1]] for complete in global_history]
-    #print(cuts)
-
+    if SHOW_CUTS:
+        cuts = [[hashed_tuple[1] for hashed_tuple in complete] for complete in global_history]
+        for _, e in enumerate(cuts):
+            print()
+            print(e)
 
 yeet()
-
-### LONG
-'''def min_cut(graph):
-    contracted_new = graph
-    contracted_old = contracted_new
-
-    while len(contracted_new) > 0:
-        contracted_old = contracted_new
-        to_contract = contracted_old[random.randint(0, len(contracted_old)-1)]
-        contracted_new = contract_hyperedge(to_contract, contracted_old)
-
-    return len(contracted_old)
-
-n, graph = get_input()
-
-res = []
-
-for _ in range(floor(n*n*log(n,2))):
-    res.append(min_cut(graph))
-
-print(min(res))'''
+# It was a magic number
