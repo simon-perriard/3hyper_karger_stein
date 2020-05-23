@@ -34,7 +34,7 @@ def replace_endpoints(hyperedge, e, history):
     new_edge = []
     new_history = history
 
-    # replace the vertices contracted by the new one
+    ## replace the merged vertices by the new one
     for i in range(3):
 
         elt = e[i]
@@ -42,7 +42,7 @@ def replace_endpoints(hyperedge, e, history):
         if elt in hyperedge:
             new_edge.append(new_vertice)
 
-            # transfer history to new node
+            ## transfer history to new node
             if elt != new_vertice:
                 for _, h in enumerate(new_history[elt-1]):
                     new_history[new_vertice-1].append(h)
@@ -58,7 +58,7 @@ def replace_endpoints(hyperedge, e, history):
 def contract_hyperedge(hyperedge, graph, n, history):
     contracted_graph = []
 
-    ## If all the endpoints of the edge to are different, 2 will disappear into the one remaining
+    ## If all the endpoints of the edge are different, 2 will disappear into the one remaining
     ## If only 2 different endpoints, 1 will disappear
     new_n = n
     new_history = [[i for i in group] for group in history]
@@ -77,12 +77,13 @@ def contract_hyperedge(hyperedge, graph, n, history):
 
     return new_n, contracted_graph, new_history
 
-# This is not a magic number
+## This is not a magic number
 current_min = 40000000
 
 ## each cell will contain [cut_size, [[hash0, [set0]], [hash1, set1], ...]]
 ## ordered by hash value for later comparison
-## A min_cut is represented only once
+## A cut is represented only once
+## only cut with a <= cut size will be added
 global_history = []
 
 def new_min(x):
@@ -114,6 +115,7 @@ def insert_cut(cut_size, history):
         ## Extract hash list for comparison
         candidate_hash_list = [h[0] for h in prep2]
 
+        ## Insert if it's anew cut
         if candidate_hash_list not in current_hash_list:
             global_history.append([cut_size, prep2])
 
@@ -127,6 +129,7 @@ def insert_cut(cut_size, history):
         ## Extract list of hash list of current cuts
         current_hash_list = [x[1] for x in global_history]
 
+        ## Insert if it's anew cut
         if prep2 not in current_hash_list:
             global_history.append([cut_size, prep2])
     
@@ -145,11 +148,12 @@ def min_cut(n, graph, history):
             insert_cut(cut_size, history)
             return
         
-        # try one last contraction
+        ## Edge cases when n == 3
+        ## try one last contraction
         to_contract = graph[random.randint(0, len(graph)-1)]
         new_n, last_try, new_history = contract_hyperedge(to_contract, graph, n, history)
 
-        if new_n == 1: #should not have contracted
+        if new_n == 1: ## oopsi should not have contracted
             cut_size = len(graph)
             insert_cut(cut_size, history)
         else:
@@ -160,6 +164,8 @@ def min_cut(n, graph, history):
 
     precontracted = graph
     new_n = n
+
+    ## Deep copy needed
     new_history = [[i for i in group] for group in history]
 
     for _ in range(n - ceil(n/sqrt(2))):
@@ -175,7 +181,7 @@ def min_cut(n, graph, history):
 def yeet():
     n, graph = get_input()
 
-    # at first, each element represents itself
+    ## at first, each element represents itself
     history = [[x] for x in range(1, n+1)]
 
     for _ in range(4*ceil((log(n, 2)**2))):
@@ -193,4 +199,4 @@ def yeet():
             print(e)
 
 yeet()
-# It was a magic number
+## It was a magic number
